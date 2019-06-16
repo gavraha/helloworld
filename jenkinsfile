@@ -1,0 +1,22 @@
+pipeline{
+    agent { label 'Guy' }
+    triggers { pollSCM('H/1 * * * *') }
+    stages{
+        stage('Git') {
+			steps{ 		
+                checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'helloworld'], [$class: 'LocalBranch', localBranch: 'master']], submoduleCfg: [], userRemoteConfigs: [[url: 'https://github.com/gavraha/helloworld.git']]])
+			}
+        }
+        stage('build') {
+            steps {
+                sh'''#!/bin/bash
+                    cd helloworld
+                    docker-compose build
+                    docker tag helloworld_app localhost:5000/helloworld_app
+                    docker push localhost:5000/helloworld_app
+                    docker image rm -f helloworld_app
+                '''
+            }
+        }
+    }
+}
